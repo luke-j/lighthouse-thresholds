@@ -8,7 +8,6 @@ var lodash = require('lodash');
 var chalk = _interopDefault(require('chalk'));
 var lighthouse = _interopDefault(require('lighthouse'));
 var chromeLauncher = require('chrome-launcher');
-var chromium = require('chromium');
 
 const log = str => console.log(chalk.green(str));
 
@@ -26,7 +25,6 @@ const launchChromeAndRunLighthouse = async url => {
   const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu'];
   const chrome = await chromeLauncher.launch({
     chromeFlags,
-    chromePath: chromium.path,
     connectionPollInterval: 10000
   });
   const results = await lighthouse(
