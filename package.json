@@ -1,6 +1,6 @@
 {
   "name": "lighthouse-thresholds",
-  "version": "1.0.2-alpha",
+  "version": "1.0.3-alpha",
   "description": "A tool for setting and comparing lighthouse budgets",
   "main": "index.js",
   "license": "MIT",

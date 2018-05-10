@@ -21,7 +21,8 @@ const launchChromeAndRunLighthouse = async url => {
   const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu']
   const chrome = await chromeLauncher.launch({
     chromeFlags,
-    chromePath: path
+    chromePath: path,
+    connectionPollInterval: 10000
   })
   const results = await lighthouse(
     url,

@@ -23,10 +23,11 @@ const err = error => {
 };
 
 const launchChromeAndRunLighthouse = async url => {
-  const chromeFlags = ['--headless'];
+  const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu'];
   const chrome = await chromeLauncher.launch({
     chromeFlags,
-    chromePath: chromium.path
+    chromePath: chromium.path,
+    connectionPollInterval: 10000
   });
   const results = await lighthouse(
     url,
