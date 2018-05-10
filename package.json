@@ -1,6 +1,6 @@
 {
   "name": "lighthouse-thresholds",
-  "version": "1.0.3-alpha",
+  "version": "1.0.4-alpha",
   "description": "A tool for setting and comparing lighthouse budgets",
   "main": "index.js",
   "license": "MIT",
@@ -33,7 +33,6 @@
   "dependencies": {
     "chalk": "^2.4.1",
     "chrome-launcher": "^0.10.2",
-    "chromium": "^1.0.2",
     "find-config": "^1.0.0",
     "lighthouse": "^2.9.4",
     "lodash": "^4.17.10"

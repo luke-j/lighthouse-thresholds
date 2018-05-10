@@ -8,6 +8,8 @@ Create a `.lighthouserc` file in your project root (see the example file [here](
 
 Run `lighthouse-thresholds` to run Google Lighthouse against your defined URLs and either pass or fail them when comparing with the set thresholds.
 
+Note that there will need to be a locally installed version of chrome (or chromium), for this package to work.
+
 ## Config options
 
 | Param                     | Type     | Meaning                                              |

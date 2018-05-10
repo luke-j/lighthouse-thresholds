@@ -3,7 +3,6 @@ import { mapValues, keyBy, camelCase } from 'lodash'
 import chalk from 'chalk'
 import lighthouse from 'lighthouse'
 import * as chromeLauncher from 'chrome-launcher'
-import { path } from 'chromium'
 
 const log = str => console.log(chalk.green(str))
 
@@ -21,7 +20,6 @@ const launchChromeAndRunLighthouse = async url => {
   const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu']
   const chrome = await chromeLauncher.launch({
     chromeFlags,
-    chromePath: path,
     connectionPollInterval: 10000
   })
   const results = await lighthouse(
