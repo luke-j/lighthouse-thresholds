@@ -93,27 +93,33 @@ const parseReport = async (scores, thresholds, url) => {
     err('Could not find .lighthouserc or .lighthouserc.js config file');
   }
 
-  await Promise.all(
-    config.map(
-      ({ url, thresholds }) =>
-        new Promise(resolve =>
-          launchChromeAndRunLighthouse(url).then(
-            async ({ reportCategories }) => {
-              const normalizeKeys = lodash.keyBy(reportCategories, ({ name }) =>
-                lodash.camelCase(name)
-              );
-              const scores = lodash.mapValues(normalizeKeys, ({ score }) =>
-                parseFloat(score.toFixed(2))
-              );
+  try {
+    await Promise.all(
+      config.map(
+        ({ url, thresholds }) =>
+          new Promise((resolve, reject) =>
+            launchChromeAndRunLighthouse(url)
+              .then(async ({ reportCategories }) => {
+                const normalizeKeys = lodash.keyBy(reportCategories, ({ name }) =>
+                  lodash.camelCase(name)
+                );
+                const scores = lodash.mapValues(normalizeKeys, ({ score }) =>
+                  parseFloat(score.toFixed(2))
+                );
 
-              const issues = await parseReport(scores, thresholds, url);
-              errors = errors.concat(issues);
-              resolve();
-            }
+                const issues = await parseReport(scores, thresholds, url);
+                errors = errors.concat(issues);
+                resolve();
+              })
+              .catch(e => {
+                reject(e);
+              })
           )
-        )
-    )
-  );
+      )
+    );
+  } catch (e) {
+    throw e
+  }
 
   if (errors.length) err(errors);
 
