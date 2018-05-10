@@ -18,7 +18,7 @@ const err = error => {
 }
 
 const launchChromeAndRunLighthouse = async url => {
-  const chromeFlags = ['--headless']
+  const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu']
   const chrome = await chromeLauncher.launch({
     chromeFlags,
     chromePath: path
