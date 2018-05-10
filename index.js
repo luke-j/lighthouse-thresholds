@@ -17,21 +17,27 @@ const err = error => {
 }
 
 const launchChromeAndRunLighthouse = async url => {
-  const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu']
-  const chrome = await chromeLauncher.launch({
-    chromeFlags,
-    connectionPollInterval: 10000
-  })
-  const results = await lighthouse(
-    url,
-    { chromeFlags, port: chrome.port },
-    null
-  )
+  try {
+    log(`fetching ${url}`)
+    const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu']
+    const chrome = await chromeLauncher.launch({
+      chromeFlags,
+      connectionPollInterval: 10000
+    })
+    log('running lighthouse')
+    const results = await lighthouse(
+      url,
+      { chromeFlags, port: chrome.port },
+      null
+    )
 
-  delete results.artifacts
-  await chrome.kill()
+    delete results.artifacts
+    await chrome.kill()
 
-  return results
+    return results
+  } catch (e) {
+    throw e
+  }
 }
 
 const parseReport = async (scores, thresholds, url) => {
@@ -101,6 +107,7 @@ const parseReport = async (scores, thresholds, url) => {
                   parseFloat(score.toFixed(2))
                 )
 
+                log('parsing results')
                 const issues = await parseReport(scores, thresholds, url)
                 errors = errors.concat(issues)
                 resolve()
