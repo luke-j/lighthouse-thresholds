@@ -1,0 +1,12 @@
+[
+  {
+    "url": "https://google.com/",
+    "thresholds": {
+      "performance": 90.25,
+      "seo": 90.25,
+      "progressive": 90.25,
+      "a11y": 90.25,
+      "bestPractice": 90.25
+    }
+  }
+]

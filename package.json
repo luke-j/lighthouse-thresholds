@@ -1,0 +1,41 @@
+{
+  "name": "lighthouse-thresholds",
+  "version": "1.0.0-alpha",
+  "description": "A tool for setting and comparing lighthouse budgets",
+  "main": "index.js",
+  "license": "MIT",
+  "repository": "https://github.com/luke-j/lighthouse-thresholds",
+  "author": {
+    "name": "Luke Jones",
+    "email": "luke@lukejones.co",
+    "url": "lukejones.co"
+  },
+  "bin": {
+    "lighthouse-thresholds": "bin/index.js"
+  },
+  "scripts": {
+    "precommit": "npm run lint && npm run beautify",
+    "lint": "eslint src",
+    "beautify": "pretty-quick --staged",
+    "build":
+      "rollup index.js --banner '#!/usr/bin/env node' --output.format cjs --output.file bin/index.js && chmod +x bin/index.js"
+  },
+  "engines": {
+    "node": ">= 8"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "husky": "^0.14.3",
+    "prettier": "^1.12.1",
+    "pretty-quick": "^1.4.1",
+    "rollup": "^0.58.2"
+  },
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "chrome-launcher": "^0.10.2",
+    "chromium": "^1.0.2",
+    "find-config": "^1.0.0",
+    "lighthouse": "^2.9.4",
+    "lodash": "^4.17.10"
+  }
+}
