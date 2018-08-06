@@ -3,11 +3,11 @@
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var findConfig = _interopDefault(require('find-config'));
-var lodash = require('lodash');
 var chalk = _interopDefault(require('chalk'));
+var lodash = require('lodash');
 var lighthouse = _interopDefault(require('lighthouse'));
 var chromeLauncher = require('chrome-launcher');
+var findConfig = _interopDefault(require('find-config'));
 
 const log = str => console.log(chalk.green(str));
 
@@ -21,69 +21,70 @@ const err = error => {
   process.exit(1);
 };
 
-const launchChromeAndRunLighthouse = async url => {
-  const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu'];
-  const chrome = await chromeLauncher.launch({
-    chromeFlags,
-    connectionPollInterval: 10000
-  });
-  const results = await lighthouse(
-    url,
-    { chromeFlags, port: chrome.port },
-    null
-  );
+const parseMetrics = (audits, thresholds, url) => {
+  const metrics = lodash.intersection(lodash.keys(audits), lodash.keys(thresholds));
 
-  delete results.artifacts;
-  await chrome.kill();
+  return metrics.map(metric => {
+    const { scoreDisplayMode, rawValue } = audits[metric];
+    const numeric = scoreDisplayMode === 'numeric';
+    const binary = scoreDisplayMode === 'binary';
 
-  return results
+    if (numeric) {
+      const threshold = parseFloat(thresholds[metric].replace(/>|</g, ''), 2);
+      const isGreaterThan = thresholds[metric].startsWith('>');
+      const isLessThan = thresholds[metric].startsWith('<');
+      const failedGreaterThan = isGreaterThan && rawValue < threshold;
+      const failedLessThan = isLessThan && rawValue > threshold;
+
+      if (failedGreaterThan || failedLessThan) {
+        return `${url} - ${metric} failed: ${parseFloat(rawValue, 2) +
+          thresholds[metric]}`
+      }
+    }
+
+    if (binary && rawValue !== thresholds[metric]) {
+      return `${url} - ${metric} failed: expected ${
+        thresholds[metric]
+      }, got ${rawValue}`
+    }
+  })
 };
 
-const parseReport = async (scores, thresholds, url) => {
+const launchChromeAndRunLighthouse = async (url, runs) => {
+  try {
+    log(`fetching ${url}`);
+    const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu'];
+    const chrome = await chromeLauncher.launch({
+      chromeFlags,
+      connectionPollInterval: 10000
+    });
+    const results = await Promise.all(
+      Array(runs)
+        .fill()
+        .map(async (el, i) => {
+          log(`running lighthouse - run ${i + 1}`);
+          const run = await lighthouse(
+            url,
+            { chromeFlags, port: chrome.port },
+            null
+          );
+
+          delete run.artifacts;
+
+          return run
+        })
+    );
+
+    await chrome.kill();
+
+    return results
+  } catch (e) {
+    throw e
+  }
+};
+
+(async () => {
   const errors = [];
-  const {
-    performance: performanceScore,
-    progressiveWebApp: progressiveScore,
-    accessibility: a11yScore,
-    bestPractices: bestPracticeScore,
-    seo: seoScore
-  } = scores;
-  const {
-    performance = 0,
-    progressive = 0,
-    a11y = 0,
-    bestPractice = 0,
-    seo = 0
-  } = thresholds;
-
-  if (performance > performanceScore) {
-    errors.push(`${url} - Performance: ${performanceScore} < ${performance}`);
-  }
-
-  if (progressive > progressiveScore) {
-    errors.push(
-      `${url} - Progressive Web App: ${progressiveScore} < ${progressive}`
-    );
-  }
-
-  if (a11y > a11yScore) {
-    errors.push(`${url} - a11y: ${a11yScore} < ${a11y}`);
-  }
-
-  if (bestPractice > bestPracticeScore) {
-    errors.push(
-      `${url} - Best Practices: ${bestPracticeScore} < ${bestPractice}`
-    );
-  }
-
-  if (seo > seoScore) {
-    errors.push(`${url} - SEO: ${seoScore} < ${seo}`);
-  }
-
-  return errors
-}
-;(async () => {
-  let errors = [];
   const config =
     JSON.parse(findConfig.read('.lighthouserc')) ||
     findConfig.require('.lighthouserc.js');
@@ -95,19 +96,14 @@ const parseReport = async (scores, thresholds, url) => {
   try {
     await Promise.all(
       config.map(
-        ({ url, thresholds }) =>
+        ({ url, thresholds, runs = 1 }) =>
           new Promise((resolve, reject) =>
-            launchChromeAndRunLighthouse(url)
-              .then(async ({ reportCategories }) => {
-                const normalizeKeys = lodash.keyBy(reportCategories, ({ name }) =>
-                  lodash.camelCase(name)
-                );
-                const scores = lodash.mapValues(normalizeKeys, ({ score }) =>
-                  parseFloat(score.toFixed(2))
-                );
+            launchChromeAndRunLighthouse(url, runs)
+              .then(results => {
+                results.forEach(({ lhr: { audits, categories } }) => {
+                  errors.push(...parseMetrics(audits, thresholds, url));
+                });
 
-                const issues = await parseReport(scores, thresholds, url);
-                errors = errors.concat(issues);
                 resolve();
               })
               .catch(e => {

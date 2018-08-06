@@ -1,5 +1,11 @@
 # lighthouse-thresholds
 
+This is an iteration from the initial implementation where budgets could only be compared by categories. In this implementation budgets can be implemented by Google Lightouse [audit category](https://docs.google.com/spreadsheets/d/1dXH-bXX3gxqqpD1f7rp6ImSOhobsT1gn_GQ2fGZp8UU/edit?ts=59fb61d2#gid=0).
+
+_Please note that due to https://github.com/GoogleChrome/lighthouse/issues/1091, only one concurrent run is currently supported_
+
+---
+
 This package runs [Google Lighthouse](https://github.com/GoogleChrome/lighthouse) and compares the scores against predetermined thresholds defined an a `.lighthouserc` config file.
 
 ## Usage
@@ -12,15 +18,10 @@ Note that there will need to be a locally installed version of chrome (or chromi
 
 ## Config options
 
-| Param                     | Type     | Meaning                                              |
-| ------------------------- | -------- | ---------------------------------------------------- |
-| `url`                     | _String_ | A full url to run Google Lighthouse against          |
-| `thresholds`              | _Object_ | An object containing the predetermined thresholds    |
-| `thresholds.performance`  | _Number_ | A threshold for the page's performance score         |
-| `thresholds.seo`          | _Number_ | A threshold for the page's performance score         |
-| `thresholds.progressive`  | _Number_ | A threshold for the page's progressive/offline score |
-| `thresholds.a11y`         | _Number_ | A threshold for the page's accessibility score       |
-| `thresholds.bestPractice` | _Number_ | A threshold for the page's best practice score       |
+| Param        | Type     | Meaning                                                                                                                                                                                                         |
+| ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`        | _String_ | A full url to run Google Lighthouse against                                                                                                                                                                     |
+| `thresholds` | _Object_ | An object containing the thresholds, keys must correspond with Google Lighthouse [audit categories](https://docs.google.com/spreadsheets/d/1dXH-bXX3gxqqpD1f7rp6ImSOhobsT1gn_GQ2fGZp8UU/edit?ts=59fb61d2#gid=0) |
 
 ## Example `.lighthouserc` file
 
@@ -29,11 +30,8 @@ Note that there will need to be a locally installed version of chrome (or chromi
   {
     "url": "https://google.com/",
     "thresholds": {
-      "performance": 90.25,
-      "seo": 90.25,
-      "progressive": 90.25,
-      "a11y": 90.25,
-      "bestPractice": 90.25
+      "first-contentful-paint": "<100",
+      "uses-http2": false
     }
   }
 ]

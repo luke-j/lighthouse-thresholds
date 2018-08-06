@@ -34,7 +34,7 @@
     "chalk": "^2.4.1",
     "chrome-launcher": "^0.10.2",
     "find-config": "^1.0.0",
-    "lighthouse": "^2.9.4",
+    "lighthouse": "^3.0.3",
     "lodash": "^4.17.10"
   }
 }

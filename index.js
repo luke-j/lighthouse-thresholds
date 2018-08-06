@@ -1,90 +1,10 @@
 import findConfig from 'find-config'
-import { mapValues, keyBy, camelCase } from 'lodash'
-import chalk from 'chalk'
-import lighthouse from 'lighthouse'
-import * as chromeLauncher from 'chrome-launcher'
 
-const log = str => console.log(chalk.green(str))
-
-const err = error => {
-  if (error.length > 0) {
-    error.forEach(e => console.log(chalk.bold.red(e)))
-  } else {
-    console.log(chalk.bold.red(error))
-  }
-
-  process.exit(1)
-}
-
-const launchChromeAndRunLighthouse = async url => {
-  try {
-    log(`fetching ${url}`)
-    const chromeFlags = ['--headless', '--no-sandbox', '--disable-gpu']
-    const chrome = await chromeLauncher.launch({
-      chromeFlags,
-      connectionPollInterval: 10000
-    })
-    log('running lighthouse')
-    const results = await lighthouse(
-      url,
-      { chromeFlags, port: chrome.port },
-      null
-    )
-
-    delete results.artifacts
-    await chrome.kill()
-
-    return results
-  } catch (e) {
-    throw e
-  }
-}
-
-const parseReport = async (scores, thresholds, url) => {
-  const errors = []
-  const {
-    performance: performanceScore,
-    progressiveWebApp: progressiveScore,
-    accessibility: a11yScore,
-    bestPractices: bestPracticeScore,
-    seo: seoScore
-  } = scores
-  const {
-    performance = 0,
-    progressive = 0,
-    a11y = 0,
-    bestPractice = 0,
-    seo = 0
-  } = thresholds
-
-  if (performance > performanceScore) {
-    errors.push(`${url} - Performance: ${performanceScore} < ${performance}`)
-  }
-
-  if (progressive > progressiveScore) {
-    errors.push(
-      `${url} - Progressive Web App: ${progressiveScore} < ${progressive}`
-    )
-  }
-
-  if (a11y > a11yScore) {
-    errors.push(`${url} - a11y: ${a11yScore} < ${a11y}`)
-  }
-
-  if (bestPractice > bestPracticeScore) {
-    errors.push(
-      `${url} - Best Practices: ${bestPracticeScore} < ${bestPractice}`
-    )
-  }
-
-  if (seo > seoScore) {
-    errors.push(`${url} - SEO: ${seoScore} < ${seo}`)
-  }
-
-  return errors
-}
+import { log, err } from './src/util'
+import { parseMetrics } from './src/parser'
+import { launchChromeAndRunLighthouse } from './src/lighthouse'
 ;(async () => {
-  let errors = []
+  const errors = []
   const config =
     JSON.parse(findConfig.read('.lighthouserc')) ||
     findConfig.require('.lighthouserc.js')
@@ -96,20 +16,14 @@ const parseReport = async (scores, thresholds, url) => {
   try {
     await Promise.all(
       config.map(
-        ({ url, thresholds }) =>
+        ({ url, thresholds, runs = 1 }) =>
           new Promise((resolve, reject) =>
-            launchChromeAndRunLighthouse(url)
-              .then(async ({ reportCategories }) => {
-                const normalizeKeys = keyBy(reportCategories, ({ name }) =>
-                  camelCase(name)
-                )
-                const scores = mapValues(normalizeKeys, ({ score }) =>
-                  parseFloat(score.toFixed(2))
-                )
+            launchChromeAndRunLighthouse(url, runs)
+              .then(results => {
+                results.forEach(({ lhr: { audits, categories } }) => {
+                  errors.push(...parseMetrics(audits, thresholds, url))
+                })
 
-                log('parsing results')
-                const issues = await parseReport(scores, thresholds, url)
-                errors = errors.concat(issues)
                 resolve()
               })
               .catch(e => {
